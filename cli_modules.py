@@ -134,8 +134,23 @@ class CLIParameter(object):
 
         childNodes = _parseElements(self, elementTree)
         for n in childNodes:
-            logger.warning("Element %r within %r not parsed" % (n.tag, elementTree.tag))
+            if n.tag == 'constraints':
+                self.constraints = CLIConstraints()
+                self.constraints.parse(n)
+            else:
+                logger.warning("Element %r within %r not parsed" % (n.tag, elementTree.tag))
 
         self.hidden = _parseBool(elementTree.get('hidden', 'false'))
 
 
+class CLIConstraints(object):
+    REQUIRED_ELEMENTS = ('step', )
+
+    OPTIONAL_ELEMENTS = ('minimum', 'maximum')
+    
+    __slots__ = REQUIRED_ELEMENTS + OPTIONAL_ELEMENTS
+
+    def parse(self, elementTree):
+        childNodes = _parseElements(self, elementTree, 'constraints')
+        for n in childNodes:
+            logger.warning("Element %r within %r not parsed" % (n.tag, elementTree.tag))
