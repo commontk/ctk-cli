@@ -132,13 +132,29 @@ class CLIParameter(object):
     def parse(self, elementTree):
         assert elementTree.tag in self.TYPES, elementTree.tag
 
+        elements = []
+
         childNodes = _parseElements(self, elementTree)
         for n in childNodes:
             if n.tag == 'constraints':
                 self.constraints = CLIConstraints()
                 self.constraints.parse(n)
+            elif n.tag == 'element':
+                if not n.text:
+                    logger.warning("Ignoring empty <element> within <%s>" % (elementTree.tag, ))
+                else:
+                    elements.append(n.text)
             else:
                 logger.warning("Element %r within %r not parsed" % (n.tag, elementTree.tag))
+
+        if elementTree.tag.endswith('-enumeration'):
+            self.elements = elements
+            if not elements:
+                logger.warning("No <element>s found within <%s>" % (elementTree.tag, ))
+        else:
+            self.elements = None
+            if elements:
+                logger.warning("Ignoring <element>s within <%s>" % (elementTree.tag, ))
 
         self.hidden = _parseBool(elementTree.get('hidden', 'false'))
 
