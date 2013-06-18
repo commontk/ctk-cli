@@ -157,6 +157,12 @@ class CLIParameter(object):
                  "subtype", # 'type' of imageType / geometryType
         )
 
+    def identifier(self):
+        result = self.name if self.name else self.longflag
+        if not result:
+            raise RuntimeError, "Cannot identify parameter either by name or by longflag (both missing)"
+        return result
+
     def parse(self, elementTree):
         assert _tag(elementTree) in self.TYPES, _tag(elementTree)
 
