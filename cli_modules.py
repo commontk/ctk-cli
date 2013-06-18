@@ -37,6 +37,32 @@ def _parseBool(x):
         return False
     raise ValueError, "cannot convert %r to boolean" % (x, )
 
+
+def _parseElements(self, elementTree, expectedTag = None):
+    """Read REQUIRED_ELEMENTS and OPTIONAL_ELEMENTS and returns
+    the rest of the children.  Every read child element's text
+    value will be filled into an attribute of the same name,
+    i.e. <description>Test</description> will lead to 'Test' being
+    assigned to self.description.  Missing REQUIRED_ELEMENTS
+    result in warnings."""
+
+    if expectedTag is not None:
+        assert elementTree.tag == expectedTag, 'expected <%s>, got <%s>' % (expectedTag, elementTree.tag)
+
+    parsed = []
+
+    for tagName in self.REQUIRED_ELEMENTS + self.OPTIONAL_ELEMENTS:
+        tagValue = elementTree.find(tagName)
+        if tagValue is not None:
+            parsed.append(tagValue)
+            tagValue = tagValue.text.strip() if tagValue.text else ""
+        elif tagName in self.REQUIRED_ELEMENTS:
+            logger.warning("Required element %r not found within %r" % (tagName, elementTree.tag))
+        setattr(self, _tagToIdentifier(tagName), tagValue)
+
+    return [tag for tag in elementTree if tag not in parsed]
+
+
 class CLIModule(list):
     REQUIRED_ELEMENTS = ('title', 'description')
 
@@ -49,17 +75,9 @@ class CLIModule(list):
         self.name = name
 
     def parse(self, elementTree):
-        assert elementTree.tag == 'executable'
+        childNodes = _parseElements(self, elementTree, 'executable')
 
-        for tagName in self.REQUIRED_ELEMENTS + self.OPTIONAL_ELEMENTS:
-            tagValue = elementTree.find(tagName)
-            if tagValue is not None:
-                tagValue = tagValue.text.strip() if tagValue.text else ""
-            elif tagName in self.REQUIRED_ELEMENTS:
-                logger.warning("Required element %r not found within %r" % (tagName, elementTree.tag))
-            setattr(self, _tagToIdentifier(tagName), tagValue)
-
-        for pnode in elementTree.findall('parameters'):
+        for pnode in childNodes:
             p = CLIParameters()
             p.parse(pnode)
             self.append(p)
@@ -72,21 +90,11 @@ class CLIParameters(list):
     __slots__ = ("advanced", ) + REQUIRED_ELEMENTS
 
     def parse(self, elementTree):
-        assert elementTree.tag == 'parameters'
-
+        childNodes = _parseElements(self, elementTree, 'parameters')
+        
         self.advanced = _parseBool(elementTree.get('advanced', 'false'))
 
-        for tagName in self.REQUIRED_ELEMENTS + self.OPTIONAL_ELEMENTS:
-            tagValue = elementTree.find(tagName)
-            if tagValue is not None:
-                tagValue = tagValue.text.strip() if tagValue.text else ""
-            elif tagName in self.REQUIRED_ELEMENTS:
-                logger.warning("Required element %r not found within %r" % (tagName, elementTree.tag))
-            setattr(self, _tagToIdentifier(tagName), tagValue)
-
-        for pnode in elementTree:
-            if pnode.tag in self.REQUIRED_ELEMENTS:
-                continue
+        for pnode in childNodes:
             p = CLIParameter()
             p.parse(pnode)
             self.append(p)
@@ -121,13 +129,8 @@ class CLIParameter(object):
     def parse(self, elementTree):
         assert elementTree.tag in self.TYPES, elementTree.tag
 
+        childNodes = _parseElements(self, elementTree)
+
         self.hidden = _parseBool(elementTree.get('hidden', 'false'))
 
-        for tagName in self.REQUIRED_ELEMENTS + self.OPTIONAL_ELEMENTS:
-            tagValue = elementTree.find(tagName)
-            if tagValue is not None:
-                tagValue = tagValue.text.strip() if tagValue.text else ""
-            elif tagName in self.REQUIRED_ELEMENTS:
-                logger.warning("Required element %r not found within %r" % (tagName, elementTree.tag))
-            setattr(self, _tagToIdentifier(tagName), tagValue)
 
