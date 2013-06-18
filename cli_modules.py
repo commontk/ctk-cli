@@ -59,6 +59,12 @@ ParameterNames = (
 def _tagToIdentifier(tagName):
     return tagName.replace('-', '_')
 
+def _parseBool(x):
+    if x in ('true', 'True', '1'):
+        return True
+    if x in ('false', 'False', '0'):
+        return False
+    raise ValueError, "cannot convert %r to boolean" % (x, )
 
 class CLIModule(list):
     REQUIRED_ELEMENTS = ('title', 'description')
@@ -72,11 +78,11 @@ class CLIModule(list):
         assert elementTree.tag == 'executable'
 
         for tagName in self.REQUIRED_ELEMENTS:
-            tagValue = element.find(tagName).text.strip()
+            tagValue = elementTree.find(tagName).text.strip()
             setattr(self, _tagToIdentifier(tagName), tagValue)
 
-        for tagName in self.REQUIRED_ELEMENTS:
-            tagValue = element.find(tagName)
+        for tagName in self.OPTIONAL_ELEMENTS:
+            tagValue = elementTree.find(tagName)
             if tagValue is not None:
                 tagValue = tagValue.text.strip()
             setattr(self, _tagToIdentifier(tagName), tagValue)
@@ -95,10 +101,10 @@ class CLIParameters(list):
     def parse(self, elementTree):
         assert elementTree.tag == 'parameters'
 
-        self.advanced = _parseBool(element.get('advanced', 'false'))
+        self.advanced = _parseBool(elementTree.get('advanced', 'false'))
 
         for tagName in self.REQUIRED_ELEMENTS:
-            tagValue = element.find(tagName).text.strip()
+            tagValue = elementTree.find(tagName).text.strip()
             setattr(self, _tagToIdentifier(tagName), tagValue)
 
 
