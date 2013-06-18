@@ -15,6 +15,11 @@ def isCLIExecutable(filePath):
         filePath = filePath.lower() # be case insensitive
         return filePath.endswith(".exe") or filePath.endswith(".bat")
     else:
+        # differing from qSlicerUtils here, which does not check for executable bits
+        # (this way we can differentiate between XML files saved with the same name
+        # as the executables and the executables themselves)
+        if not os.access(filePath, os.X_OK):
+            return False
         return not '.' in os.path.basename(filePath)
 
 def listCLIExecutables(baseDir):
