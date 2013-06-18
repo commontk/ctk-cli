@@ -130,6 +130,8 @@ class CLIParameter(object):
         assert elementTree.tag in self.TYPES, elementTree.tag
 
         childNodes = _parseElements(self, elementTree)
+        for n in childNodes:
+            logger.warning("Element %r within %r not parsed" % (n.tag, elementTree.tag))
 
         self.hidden = _parseBool(elementTree.get('hidden', 'false'))
 
