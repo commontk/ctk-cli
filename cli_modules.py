@@ -37,6 +37,20 @@ def _parseBool(x):
         return False
     raise ValueError, "cannot convert %r to boolean" % (x, )
 
+def _tag(element):
+    """Return element.tag with xmlns stripped away."""
+    tag = element.tag
+    if tag[0] == "{":
+        uri, tag = tag[1:].split("}")
+    return tag
+
+def _uriPrefix(element):
+    """Return xmlns prefix of the given element."""
+    i = element.tag.find('}')
+    if i < 0:
+        return ""
+    return element.tag[:i+1]
+
 
 def _parseElements(self, elementTree, expectedTag = None):
     """Read REQUIRED_ELEMENTS and OPTIONAL_ELEMENTS and returns
@@ -46,23 +60,25 @@ def _parseElements(self, elementTree, expectedTag = None):
     assigned to self.description.  Missing REQUIRED_ELEMENTS
     result in warnings."""
 
+    xmlns = _uriPrefix(elementTree)
+
     if expectedTag is not None:
-        assert elementTree.tag == expectedTag, 'expected <%s>, got <%s>' % (expectedTag, elementTree.tag)
+        assert _tag(elementTree) == expectedTag, 'expected <%s>, got <%s>' % (expectedTag, _tag(elementTree))
 
     parsed = []
 
     for tagName in self.REQUIRED_ELEMENTS + self.OPTIONAL_ELEMENTS:
-        tags = elementTree.findall(tagName)
+        tags = elementTree.findall(xmlns + tagName)
         if tags:
             parsed.extend(tags)
             tagValue = tags[0].text
             tagValue = tagValue.strip() if tagValue else ""
             if len(tags) > 1:
-                logger.warning("More than one <%s> found within %r (using only first)" % (tagName, elementTree.tag))
+                logger.warning("More than one <%s> found within %r (using only first)" % (tagName, _tag(elementTree)))
         else:
             tagValue = None
             if tagName in self.REQUIRED_ELEMENTS:
-                logger.warning("Required element %r not found within %r" % (tagName, elementTree.tag))
+                logger.warning("Required element %r not found within %r" % (tagName, _tag(elementTree)))
         setattr(self, _tagToIdentifier(tagName), tagValue)
 
     return [tag for tag in elementTree if tag not in parsed]
@@ -83,12 +99,12 @@ class CLIModule(list):
         childNodes = _parseElements(self, elementTree, 'executable')
 
         for pnode in childNodes:
-            if pnode.tag == 'parameters':
+            if _tag(pnode) == 'parameters':
                 p = CLIParameters()
                 p.parse(pnode)
                 self.append(p)
             else:
-                logger.warning("Element %r within %r not parsed" % (pnode.tag, elementTree.tag))
+                logger.warning("Element %r within %r not parsed" % (_tag(pnode), _tag(elementTree)))
 
 
 class CLIParameters(list):
@@ -135,31 +151,31 @@ class CLIParameter(object):
         )
 
     def parse(self, elementTree):
-        assert elementTree.tag in self.TYPES, elementTree.tag
+        assert _tag(elementTree) in self.TYPES, _tag(elementTree)
 
         elements = []
 
         childNodes = _parseElements(self, elementTree)
         for n in childNodes:
-            if n.tag == 'constraints':
+            if _tag(n) == 'constraints':
                 self.constraints = CLIConstraints()
                 self.constraints.parse(n)
-            elif n.tag == 'element':
+            elif _tag(n) == 'element':
                 if not n.text:
-                    logger.warning("Ignoring empty <element> within <%s>" % (elementTree.tag, ))
+                    logger.warning("Ignoring empty <element> within <%s>" % (_tag(elementTree), ))
                 else:
                     elements.append(n.text)
             else:
-                logger.warning("Element %r within %r not parsed" % (n.tag, elementTree.tag))
+                logger.warning("Element %r within %r not parsed" % (_tag(n), _tag(elementTree)))
 
-        if elementTree.tag.endswith('-enumeration'):
+        if _tag(elementTree).endswith('-enumeration'):
             self.elements = elements
             if not elements:
-                logger.warning("No <element>s found within <%s>" % (elementTree.tag, ))
+                logger.warning("No <element>s found within <%s>" % (_tag(elementTree), ))
         else:
             self.elements = None
             if elements:
-                logger.warning("Ignoring <element>s within <%s>" % (elementTree.tag, ))
+                logger.warning("Ignoring <element>s within <%s>" % (_tag(elementTree), ))
 
         self.hidden = _parseBool(elementTree.get('hidden', 'false'))
 
@@ -174,4 +190,4 @@ class CLIConstraints(object):
     def parse(self, elementTree):
         childNodes = _parseElements(self, elementTree, 'constraints')
         for n in childNodes:
-            logger.warning("Element %r within %r not parsed" % (n.tag, elementTree.tag))
+            logger.warning("Element %r within %r not parsed" % (_tag(n), _tag(elementTree)))
