@@ -1,8 +1,10 @@
 # see https://github.com/commontk/CTK/blob/master/Libs/CommandLineModules/Core/Resources/ctkCmdLineModule.xsd
 # for what we aim to be able to parse
 
-import os, sys, glob, subprocess
+import os, sys, glob, subprocess, logging
 import xml.etree.ElementTree as ET
+
+logger = logging.getLogger(__name__)
 
 def isCLIExecutable(filePath):
     # see qSlicerUtils::isCLIExecutable
@@ -25,37 +27,6 @@ def getXMLDescription(cliExecutable):
 
 # --------------------------------------------------------------------
 
-ParameterNames = (
-    'boolean',
-
-    'integer',
-    'float',
-    'double',
-
-    'string',
-    'directory',
-
-    'integer-vector',
-    'float-vector',
-    'double-vector',
-
-    'string-vector',
-
-    'integer-enumeration',
-    'float-enumeration',
-    'double-enumeration',
-    'string-enumeration',
-
-    'point',
-    'region',
-
-    'file',
-    'image',
-    'geometry',
-              
-    #'transform', 'table', 'measurement'
-)
-
 def _tagToIdentifier(tagName):
     return tagName.replace('-', '_')
 
@@ -77,14 +48,12 @@ class CLIModule(list):
     def parse(self, elementTree):
         assert elementTree.tag == 'executable'
 
-        for tagName in self.REQUIRED_ELEMENTS:
-            tagValue = elementTree.find(tagName).text.strip()
-            setattr(self, _tagToIdentifier(tagName), tagValue)
-
-        for tagName in self.OPTIONAL_ELEMENTS:
+        for tagName in self.REQUIRED_ELEMENTS + self.OPTIONAL_ELEMENTS:
             tagValue = elementTree.find(tagName)
             if tagValue is not None:
-                tagValue = tagValue.text.strip()
+                tagValue = tagValue.text.strip() if tagValue.text else ""
+            elif tagName in self.REQUIRED_ELEMENTS:
+                logger.warning("Required element %r not found within %r" % (tagName, elementTree.tag))
             setattr(self, _tagToIdentifier(tagName), tagValue)
 
         for pnode in elementTree.findall('parameters'):
@@ -95,6 +64,7 @@ class CLIModule(list):
 
 class CLIParameters(list):
     REQUIRED_ELEMENTS = ('label', 'description')
+    OPTIONAL_ELEMENTS = ()
 
     __slots__ = ("advanced", ) + REQUIRED_ELEMENTS
 
@@ -103,18 +73,58 @@ class CLIParameters(list):
 
         self.advanced = _parseBool(elementTree.get('advanced', 'false'))
 
-        for tagName in self.REQUIRED_ELEMENTS:
-            tagValue = elementTree.find(tagName).text.strip()
+        for tagName in self.REQUIRED_ELEMENTS + self.OPTIONAL_ELEMENTS:
+            tagValue = elementTree.find(tagName)
+            if tagValue is not None:
+                tagValue = tagValue.text.strip() if tagValue.text else ""
+            elif tagName in self.REQUIRED_ELEMENTS:
+                logger.warning("Required element %r not found within %r" % (tagName, elementTree.tag))
             setattr(self, _tagToIdentifier(tagName), tagValue)
+
+        for pnode in elementTree:
+            if pnode.tag in self.REQUIRED_ELEMENTS:
+                continue
+            p = CLIParameter()
+            p.parse(pnode)
+            self.append(p)
 
 
 class CLIParameter(object):
-    __slots__ = ("name", "flag", "longflag",
-                 "description", "label", "default",
-                 "channel", "hidden",
+    TYPES = (
+        'boolean',
+        'integer', 'float', 'double',
+        'string', 'directory',
+        'integer-vector', 'float-vector', 'double-vector',
+        'string-vector',
+        'integer-enumeration', 'float-enumeration', 'double-enumeration', 'string-enumeration',
+        'point', 'region',
+        'file', 'image', 'geometry',
+        'transform', 'table', 'measurement',
+    )
+
+    REQUIRED_ELEMENTS = ('name', 'description', 'label')
+
+    OPTIONAL_ELEMENTS = (# either 'flag' or 'longflag' (or both) or 'index' are required
+                         'flag', 'longflag', 'index',
+                         'default', 'channel')
+    
+    __slots__ = ("typ", "hidden") + REQUIRED_ELEMENTS + OPTIONAL_ELEMENTS + (
                  "constraints", # scalarVectorType, scalarType
                  "multiple", # multipleType
                  "elements", # enumerationType
                  "coordinateSystem", # pointType
         )
+
+    def parse(self, elementTree):
+        assert elementTree.tag in self.TYPES, elementTree.tag
+
+        self.hidden = _parseBool(elementTree.get('hidden', 'false'))
+
+        for tagName in self.REQUIRED_ELEMENTS + self.OPTIONAL_ELEMENTS:
+            tagValue = elementTree.find(tagName)
+            if tagValue is not None:
+                tagValue = tagValue.text.strip() if tagValue.text else ""
+            elif tagName in self.REQUIRED_ELEMENTS:
+                logger.warning("Required element %r not found within %r" % (tagName, elementTree.tag))
+            setattr(self, _tagToIdentifier(tagName), tagValue)
 
