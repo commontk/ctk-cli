@@ -153,10 +153,36 @@ class CLIParameter(object):
                  "multiple", # multipleType
                  "elements", # enumerationType
                  "coordinateSystem", # pointType
+                 "fileExtensions", # fileType
+                 "subtype", # 'type' of imageType / geometryType
         )
 
     def parse(self, elementTree):
         assert _tag(elementTree) in self.TYPES, _tag(elementTree)
+
+        self.typ = _tag(elementTree)
+        self.hidden = _parseBool(elementTree.get('hidden', 'false'))
+
+        self.constraints = None
+        self.multiple = None
+        self.elements = None
+        self.coordinateSystem = None
+        self.fileExtensions = None
+        self.subtype = None
+
+        for key, value in elementTree.items():
+            if key == 'multiple':
+                self.multiple = _parseBool(value)
+            elif key == 'coordinateSystem':
+                self.coordinateSystem = value
+            elif key == 'coordinateSystem':
+                self.coordinateSystem = value
+            elif key == 'fileExtensions':
+                self.fileExtensions = [ext.strip() for ext in value.split(",")]
+            elif key == 'type':
+                self.subtype = value
+            elif key != 'hidden':
+                logger.warning('attribute of %r ignored: %s=%r' % (_tag(elementTree), key, value))
 
         elements = []
 
@@ -181,8 +207,6 @@ class CLIParameter(object):
             self.elements = None
             if elements:
                 logger.warning("Ignoring <element>s within <%s>" % (_tag(elementTree), ))
-
-        self.hidden = _parseBool(elementTree.get('hidden', 'false'))
 
 
 class CLIConstraints(object):
