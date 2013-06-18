@@ -78,9 +78,12 @@ class CLIModule(list):
         childNodes = _parseElements(self, elementTree, 'executable')
 
         for pnode in childNodes:
-            p = CLIParameters()
-            p.parse(pnode)
-            self.append(p)
+            if pnode.tag == 'parameters':
+                p = CLIParameters()
+                p.parse(pnode)
+                self.append(p)
+            else:
+                logger.warning("Element %r within %r not parsed" % (pnode.tag, elementTree.tag))
 
 
 class CLIParameters(list):
