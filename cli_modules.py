@@ -43,7 +43,10 @@ class CLIModule(list):
     OPTIONAL_ELEMENTS = ('category', 'version', 'documentation-url',
                          'license', 'contributor', 'acknowledgements')
 
-    __slots__ = tuple(map(_tagToIdentifier, REQUIRED_ELEMENTS + OPTIONAL_ELEMENTS))
+    __slots__ = ('name', ) + tuple(map(_tagToIdentifier, REQUIRED_ELEMENTS + OPTIONAL_ELEMENTS))
+
+    def __init__(self, name):
+        self.name = name
 
     def parse(self, elementTree):
         assert elementTree.tag == 'executable'
