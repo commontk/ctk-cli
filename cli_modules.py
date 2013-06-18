@@ -52,12 +52,17 @@ def _parseElements(self, elementTree, expectedTag = None):
     parsed = []
 
     for tagName in self.REQUIRED_ELEMENTS + self.OPTIONAL_ELEMENTS:
-        tagValue = elementTree.find(tagName)
-        if tagValue is not None:
-            parsed.append(tagValue)
-            tagValue = tagValue.text.strip() if tagValue.text else ""
-        elif tagName in self.REQUIRED_ELEMENTS:
-            logger.warning("Required element %r not found within %r" % (tagName, elementTree.tag))
+        tags = elementTree.findall(tagName)
+        if tags:
+            parsed.extend(tags)
+            tagValue = tags[0].text
+            tagValue = tagValue.strip() if tagValue else ""
+            if len(tags) > 1:
+                logger.warning("More than one <%s> found within %r (using only first)" % (tagName, elementTree.tag))
+        else:
+            tagValue = None
+            if tagName in self.REQUIRED_ELEMENTS:
+                logger.warning("Required element %r not found within %r" % (tagName, elementTree.tag))
         setattr(self, _tagToIdentifier(tagName), tagValue)
 
     return [tag for tag in elementTree if tag not in parsed]
