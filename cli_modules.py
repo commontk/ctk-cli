@@ -171,7 +171,7 @@ class CLIParameter(object):
         return result
 
     def parseValue(self, value):
-        if self.typ.endswith('-vector'):
+        if self.typ.endswith('-vector') and self.typ != 'string-vector':
             return map(self._pythonType, value.split(','))
         if self.typ == 'boolean':
             return _parseBool(value)
