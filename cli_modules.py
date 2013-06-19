@@ -214,11 +214,17 @@ class CLIParameter(object):
         return result
 
     def parseValue(self, value):
-        if self.typ.endswith('-vector') and self.typ != 'string-vector':
+        if self.isNumericVector():
             return map(self._pythonType, value.split(','))
         if self.typ == 'boolean':
             return _parseBool(value)
         return self._pythonType(value)
+
+    def isOptional(self):
+        return self.index is None
+
+    def isNumericVector(self):
+        return self.typ.endswith('-vector') and self.typ != 'string-vector'
 
     @classmethod
     def parse(cls, elementTree):
