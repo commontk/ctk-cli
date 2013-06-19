@@ -142,13 +142,20 @@ class CLIParameter(object):
         'transform', 'table', 'measurement',
     )
 
+    PYTHON_TYPE_MAPPING = {
+        'boolean' : bool,
+        'integer' : int,
+        'float' : float,
+        'double' : float,
+    }
+
     REQUIRED_ELEMENTS = ('name', 'description', 'label')
 
     OPTIONAL_ELEMENTS = (# either 'flag' or 'longflag' (or both) or 'index' are required
                          'flag', 'longflag', 'index',
                          'default', 'channel')
     
-    __slots__ = ("typ", "hidden") + REQUIRED_ELEMENTS + OPTIONAL_ELEMENTS + (
+    __slots__ = ("typ", "hidden", "_pythonType") + REQUIRED_ELEMENTS + OPTIONAL_ELEMENTS + (
                  "constraints", # scalarVectorType, scalarType
                  "multiple", # multipleType
                  "elements", # enumerationType
@@ -163,10 +170,25 @@ class CLIParameter(object):
             raise RuntimeError, "Cannot identify parameter either by name or by longflag (both missing)"
         return result
 
+    def parseValue(self, value):
+        if self.typ.endswith('-vector'):
+            return map(self._pythonType, value.split(','))
+        if self.typ == 'boolean':
+            return _parseBool(value)
+        return self._pythonType(value)
+
     def parse(self, elementTree):
         assert _tag(elementTree) in self.TYPES, _tag(elementTree)
 
         self.typ = _tag(elementTree)
+
+        elementType = self.typ
+        if elementType.endswith('-vector'):
+            elementType = elementType[:-7]
+        elif elementType.endswith('-enumeration'):
+            elementType = elementType[:-12]
+        self._pythonType = self.PYTHON_TYPE_MAPPING.get(elementType, str)
+
         self.hidden = _parseBool(elementTree.get('hidden', 'false'))
 
         self.constraints = None
@@ -205,8 +227,11 @@ class CLIParameter(object):
             else:
                 logger.warning("Element %r within %r not parsed" % (_tag(n), _tag(elementTree)))
 
-        if _tag(elementTree).endswith('-enumeration'):
-            self.elements = elements
+        if self.default:
+            self.default = self.parseValue(self.default)
+
+        if self.typ.endswith('-enumeration'):
+            self.elements = map(self.parseValue, elements)
             if not elements:
                 logger.warning("No <element>s found within <%s>" % (_tag(elementTree), ))
         else:
