@@ -95,19 +95,33 @@ class CLIModule(list):
     OPTIONAL_ELEMENTS = ('category', 'version', 'documentation-url',
                          'license', 'contributor', 'acknowledgements')
 
-    __slots__ = ('name', ) + tuple(map(_tagToIdentifier, REQUIRED_ELEMENTS + OPTIONAL_ELEMENTS))
+    __slots__ = ('path', ) + tuple(map(_tagToIdentifier, REQUIRED_ELEMENTS + OPTIONAL_ELEMENTS))
 
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, path):
+        self.path = path
 
-    def parse(self, elementTree):
+        if isCLIExecutable(path):
+            elementTree = getXMLDescription(path)
+        else:
+            with file(path) as f:
+                elementTree = ET.parse(f)
+
+        self._parse(elementTree.getroot())
+
+    @property
+    def name(self):
+        return os.path.basename(self.path)
+
+    # this is called _parse, not parse (like in the classes below),
+    # because it is not a classmethod that is supposed to be used as a
+    # factory method from the outside, even if the signature and
+    # content is really similar:
+    def _parse(self, elementTree):
         childNodes = _parseElements(self, elementTree, 'executable')
 
         for pnode in childNodes:
             if _tag(pnode) == 'parameters':
-                p = CLIParameters()
-                p.parse(pnode)
-                self.append(p)
+                self.append(CLIParameters.parse(pnode))
             else:
                 logger.warning("Element %r within %r not parsed" % (_tag(pnode), _tag(elementTree)))
 
@@ -118,15 +132,18 @@ class CLIParameters(list):
 
     __slots__ = ("advanced", ) + REQUIRED_ELEMENTS
 
-    def parse(self, elementTree):
+    @classmethod
+    def parse(cls, elementTree):
+        self = cls()
+        
         childNodes = _parseElements(self, elementTree, 'parameters')
         
         self.advanced = _parseBool(elementTree.get('advanced', 'false'))
 
         for pnode in childNodes:
-            p = CLIParameter()
-            p.parse(pnode)
-            self.append(p)
+            self.append(CLIParameter.parse(pnode))
+
+        return self
 
 
 class CLIParameter(object):
@@ -177,9 +194,11 @@ class CLIParameter(object):
             return _parseBool(value)
         return self._pythonType(value)
 
-    def parse(self, elementTree):
-        assert _tag(elementTree) in self.TYPES, _tag(elementTree)
+    @classmethod
+    def parse(cls, elementTree):
+        assert _tag(elementTree) in cls.TYPES, _tag(elementTree)
 
+        self = cls()
         self.typ = _tag(elementTree)
 
         elementType = self.typ
@@ -217,8 +236,7 @@ class CLIParameter(object):
         childNodes = _parseElements(self, elementTree)
         for n in childNodes:
             if _tag(n) == 'constraints':
-                self.constraints = CLIConstraints()
-                self.constraints.parse(n)
+                self.constraints = CLIConstraints.parse(n)
             elif _tag(n) == 'element':
                 if not n.text:
                     logger.warning("Ignoring empty <element> within <%s>" % (_tag(elementTree), ))
@@ -239,6 +257,8 @@ class CLIParameter(object):
             if elements:
                 logger.warning("Ignoring <element>s within <%s>" % (_tag(elementTree), ))
 
+        return self
+
 
 class CLIConstraints(object):
     REQUIRED_ELEMENTS = ('step', )
@@ -247,7 +267,11 @@ class CLIConstraints(object):
     
     __slots__ = REQUIRED_ELEMENTS + OPTIONAL_ELEMENTS
 
-    def parse(self, elementTree):
+    @classmethod
+    def parse(cls, elementTree):
+        self = cls()
         childNodes = _parseElements(self, elementTree, 'constraints')
         for n in childNodes:
             logger.warning("Element %r within %r not parsed" % (_tag(n), _tag(elementTree)))
+
+        return self
