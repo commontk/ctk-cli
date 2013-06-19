@@ -92,7 +92,7 @@ def _parseElements(self, elementTree, expectedTag = None):
 class CLIModule(list):
     REQUIRED_ELEMENTS = ('title', 'description')
 
-    OPTIONAL_ELEMENTS = ('category', 'version', 'documentation-url',
+    OPTIONAL_ELEMENTS = ('category', 'index', 'version', 'documentation-url',
                          'license', 'contributor', 'acknowledgements')
 
     __slots__ = ('path', ) + tuple(map(_tagToIdentifier, REQUIRED_ELEMENTS + OPTIONAL_ELEMENTS))
