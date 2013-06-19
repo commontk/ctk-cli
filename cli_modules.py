@@ -112,6 +112,32 @@ class CLIModule(list):
     def name(self):
         return os.path.basename(self.path)
 
+    def parameters(self):
+        """Generator that recursively enumerates all parameters from
+        all parameter groups"""
+        for parameters in self:
+            for parameter in parameters:
+                yield parameter
+
+    def argumentsAndOptions(self):
+        """Return (arguments, options) tuple.  Together, the two lists
+        contain all parameters (recursively fetched from all parameter
+        groups), classified into optional parameters and required ones
+        (with an index).  `arguments` contains the required arguments,
+        already sorted by index."""
+        arguments = []
+        options = []
+        for parameter in self.parameters():
+            if parameter.index is not None:
+                arguments.append(parameter)
+                if parameter.flag is not None or parameter.longflag is not None:
+                    logger.warning("Parameter %s has both index=%d and flag set." % (
+                        parameter.identifier(), parameter.index))
+            else:
+                options.append(parameter)
+        arguments.sort(key = lambda parameter: parameter.index)
+        return (arguments, options)
+
     # this is called _parse, not parse (like in the classes below),
     # because it is not a classmethod that is supposed to be used as a
     # factory method from the outside, even if the signature and
@@ -182,7 +208,7 @@ class CLIParameter(object):
         )
 
     def identifier(self):
-        result = self.name if self.name else self.longflag
+        result = self.name if self.name else self.longflag.lstrip('-')
         if not result:
             raise RuntimeError, "Cannot identify parameter either by name or by longflag (both missing)"
         return result
@@ -244,6 +270,14 @@ class CLIParameter(object):
                     elements.append(n.text)
             else:
                 logger.warning("Element %r within %r not parsed" % (_tag(n), _tag(elementTree)))
+
+        if self.flag and not self.flag.startswith('-'):
+            self.flag = '-' + self.flag
+        if self.longflag and not self.longflag.startswith('-'):
+            self.longflag = '--' + self.longflag
+
+        if self.index is not None:
+            self.index = int(self.index)
 
         if self.default:
             self.default = self.parseValue(self.default)
