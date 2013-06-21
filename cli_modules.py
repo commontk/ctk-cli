@@ -119,16 +119,22 @@ class CLIModule(list):
             for parameter in parameters:
                 yield parameter
 
-    def argumentsAndOptions(self):
-        """Return (arguments, options) tuple.  Together, the two lists
-        contain all parameters (recursively fetched from all parameter
-        groups), classified into optional parameters and required ones
-        (with an index).  `arguments` contains the required arguments,
-        already sorted by index."""
+    def classifyParameters(self):
+        """Return (arguments, options, outputs) tuple.  Together, the
+        three lists contain all parameters (recursively fetched from
+        all parameter groups), classified into optional parameters,
+        required ones (with an index), and simple output parameters
+        (that would get written to a file using
+        --returnparameterfile).  `arguments` contains the required
+        arguments, already sorted by index."""
+
         arguments = []
         options = []
+        outputs = []
         for parameter in self.parameters():
-            if parameter.index is not None:
+            if parameter.channel == 'output' and not parameter.isExternalType():
+                outputs.append(parameter)
+            elif parameter.index is not None:
                 arguments.append(parameter)
                 if parameter.flag is not None or parameter.longflag is not None:
                     logger.warning("Parameter %s has both index=%d and flag set." % (
@@ -136,7 +142,7 @@ class CLIModule(list):
             else:
                 options.append(parameter)
         arguments.sort(key = lambda parameter: parameter.index)
-        return (arguments, options)
+        return (arguments, options, outputs)
 
     # this is called _parse, not parse (like in the classes below),
     # because it is not a classmethod that is supposed to be used as a
@@ -173,7 +179,7 @@ class CLIParameters(list):
 
 
 class CLIParameter(object):
-    TYPES = (
+    VALUE_TYPES = (
         'boolean',
         'integer', 'float', 'double',
         'string', 'directory',
@@ -181,9 +187,19 @@ class CLIParameter(object):
         'string-vector',
         'integer-enumeration', 'float-enumeration', 'double-enumeration', 'string-enumeration',
         'point', 'region',
-        'file', 'image', 'geometry',
-        'transform', 'table', 'measurement',
+        'file',
     )
+
+    # parameter types which are passed through temporary files (with default extensions)
+    EXTERNAL_TYPES = {
+        'image'       : '.nrrd',
+        'geometry'    : '.vtp',
+        'transform'   : '.mrml',
+        'table'       : '.ctbl', # (CSV format)
+        'measurement' : '.csv',
+    }
+
+    TYPES = VALUE_TYPES + tuple(EXTERNAL_TYPES)
 
     PYTHON_TYPE_MAPPING = {
         'boolean' : bool,
@@ -225,6 +241,13 @@ class CLIParameter(object):
 
     def isNumericVector(self):
         return self.typ.endswith('-vector') and self.typ != 'string-vector'
+
+    def isExternalType(self):
+        """Return True iff parameter values of this type are transferred via temporary files"""
+        return self.typ in self.EXTERNAL_TYPES
+
+    def defaultExtension(self):
+        return self.EXTERNAL_TYPES[self.typ]
 
     @classmethod
     def parse(cls, elementTree):
