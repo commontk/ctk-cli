@@ -253,7 +253,16 @@ class CLIParameter(object):
         return self.typ in self.EXTERNAL_TYPES
 
     def defaultExtension(self):
-        return self.EXTERNAL_TYPES[self.typ]
+        """Return default extension for this parameter type, checked
+        against supported fileExtensions.  If the default extension is
+        not within `fileExtensions`, return the first supported
+        extension."""
+        result = self.EXTERNAL_TYPES[self.typ]
+        if not self.fileExtensions:
+            return result
+        if result in self.fileExtensions:
+            return result
+        return self.fileExtensions[0]
 
     @classmethod
     def parse(cls, elementTree):
