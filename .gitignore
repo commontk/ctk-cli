@@ -1,3 +1,4 @@
 *~
 *.py[oc]
 .DS_Store
+Modules/Macros/CTK_CLI/generated
