@@ -230,6 +230,7 @@ class CLIParameter(object):
         return result
 
     def parseValue(self, value):
+        """Parse the given value and return result."""
         if self.isNumericVector():
             return map(self._pythonType, value.split(','))
         if self.typ == 'boolean':
@@ -240,7 +241,12 @@ class CLIParameter(object):
         return self.index is None
 
     def isNumericVector(self):
-        return self.typ.endswith('-vector') and self.typ != 'string-vector'
+        """Return whether this is a vector-like type with multiple
+        elements of a numeric type.  This includes the numeric
+        xxx-vector types as well as point (fixed 3D) and region (fixed
+        6D).  For these, the value will be a sequence of the
+        corresponding python type."""
+        return (self.typ.endswith('-vector') and self.typ != 'string-vector') or self.typ in ('point', 'region')
 
     def isExternalType(self):
         """Return True iff parameter values of this type are transferred via temporary files"""
@@ -256,12 +262,15 @@ class CLIParameter(object):
         self = cls()
         self.typ = _tag(elementTree)
 
-        elementType = self.typ
-        if elementType.endswith('-vector'):
-            elementType = elementType[:-7]
-        elif elementType.endswith('-enumeration'):
-            elementType = elementType[:-12]
-        self._pythonType = self.PYTHON_TYPE_MAPPING.get(elementType, str)
+        if self.typ in ('point', 'region'):
+            self._pythonType = float
+        else:
+            elementType = self.typ
+            if elementType.endswith('-vector'):
+                elementType = elementType[:-7]
+            elif elementType.endswith('-enumeration'):
+                elementType = elementType[:-12]
+            self._pythonType = self.PYTHON_TYPE_MAPPING.get(elementType, str)
 
         self.hidden = _parseBool(elementTree.get('hidden', 'false'))
 
