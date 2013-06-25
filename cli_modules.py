@@ -1,7 +1,7 @@
 # see https://github.com/commontk/CTK/blob/master/Libs/CommandLineModules/Core/Resources/ctkCmdLineModule.xsd
 # for what we aim to be able to parse
 
-import os, sys, glob, subprocess, logging
+import os, sys, glob, subprocess, logging, re
 import xml.etree.ElementTree as ET
 
 logger = logging.getLogger(__name__)
@@ -26,8 +26,32 @@ def listCLIExecutables(baseDir):
     return [path for path in glob.glob(os.path.join(baseDir, '*'))
             if isCLIExecutable(path)]
 
+re_slicerSubPath = re.compile('/lib/Slicer-[0-9.]*/cli-modules/.*')
+
+def popenCLIExecutable(command, **kwargs):
+    """Wrapper around subprocess.Popen constructor that tries to
+    detect Slicer CLI modules and launches them through the Slicer
+    launcher."""
+
+    cliExecutable = command[0]
+
+    # hack (at least, this does not scale to other module sources):
+    # detect Slicer modules and run through wrapper script setting up
+    # appropriate runtime environment
+    ma = re_slicerSubPath.search(cliExecutable)
+    if ma:
+        wrapper = os.path.join(cliExecutable[:ma.start()], 'Slicer')
+        if sys.platform.startswith('win'):
+            wrapper += '.exe'
+        command = [wrapper, '--launcher-no-splash', '--launch'] + command
+
+    return subprocess.Popen(command, stdout = subprocess.PIPE)
+
 def getXMLDescription(cliExecutable):
-    p = subprocess.Popen([cliExecutable, '--xml'], stdout = subprocess.PIPE)
+    p = popenCLIExecutable([cliExecutable, '--xml'])
+    ec = p.wait() # assumes that OS buffering can capture the full XML
+    if ec:
+        raise RuntimeError, "Calling %s failed (exit code %d)" % (cliExecutable, ec)
     return ET.parse(p.stdout)
 
 # --------------------------------------------------------------------
