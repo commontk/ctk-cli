@@ -1,7 +1,7 @@
 # see https://github.com/commontk/CTK/blob/master/Libs/CommandLineModules/Core/Resources/ctkCmdLineModule.xsd
 # for what we aim to be able to parse
 
-import os, sys, glob, subprocess, logging, re
+import os, sys, glob, logging, subprocess, tempfile, re
 import xml.etree.ElementTree as ET
 
 logger = logging.getLogger(__name__)
@@ -46,14 +46,28 @@ def popenCLIExecutable(command, **kwargs):
         if os.path.exists(wrapper):
             command = [wrapper, '--launcher-no-splash', '--launch'] + command
 
-    return subprocess.Popen(command, stdout = subprocess.PIPE)
+    return subprocess.Popen(command, **kwargs)
 
 def getXMLDescription(cliExecutable):
-    p = popenCLIExecutable([cliExecutable, '--xml'])
-    ec = p.wait() # assumes that OS buffering can capture the full XML
-    if ec:
-        raise RuntimeError, "Calling %s failed (exit code %d)" % (cliExecutable, ec)
-    return ET.parse(p.stdout)
+    command = [cliExecutable, '--xml']
+    
+    stdout, stdoutFilename = tempfile.mkstemp('.stdout')
+    stderr, stderrFilename = tempfile.mkstemp('.stderr')
+    try:
+        p = popenCLIExecutable(command, stdout = stdout, stderr = stderr)
+        ec = p.wait()
+        with file(stderrFilename) as f:
+            for line in f:
+                logger.warning('%s: %s' % (os.path.basename(cliExecutable), line[:-1]))
+        if ec:
+            raise RuntimeError, "Calling %s failed (exit code %d)" % (cliExecutable, ec)
+        with file(stdoutFilename) as f:
+            return ET.parse(f)
+    finally:
+        os.close(stdout)
+        os.close(stderr)
+        os.unlink(stdoutFilename)
+        os.unlink(stderrFilename)
 
 # --------------------------------------------------------------------
 
