@@ -43,7 +43,8 @@ def popenCLIExecutable(command, **kwargs):
         wrapper = os.path.join(cliExecutable[:ma.start()], 'Slicer')
         if sys.platform.startswith('win'):
             wrapper += '.exe'
-        command = [wrapper, '--launcher-no-splash', '--launch'] + command
+        if os.path.exists(wrapper):
+            command = [wrapper, '--launcher-no-splash', '--launch'] + command
 
     return subprocess.Popen(command, stdout = subprocess.PIPE)
 
