@@ -31,7 +31,9 @@ re_slicerSubPath = re.compile('/lib/Slicer-[0-9.]*/cli-modules/.*')
 def popenCLIExecutable(command, **kwargs):
     """Wrapper around subprocess.Popen constructor that tries to
     detect Slicer CLI modules and launches them through the Slicer
-    launcher."""
+    launcher in order to prevent potential DLL dependency issues.
+
+    Any kwargs are passed on to subprocess.Popen()."""
 
     cliExecutable = command[0]
 
@@ -48,13 +50,18 @@ def popenCLIExecutable(command, **kwargs):
 
     return subprocess.Popen(command, **kwargs)
 
-def getXMLDescription(cliExecutable):
+def getXMLDescription(cliExecutable, **kwargs):
+    """Call given cliExecutable with --xml and return xml ElementTree
+    representation of standard output.
+
+    Any kwargs are passed on to subprocess.Popen() (via popenCLIExecutable())."""
+
     command = [cliExecutable, '--xml']
     
     stdout, stdoutFilename = tempfile.mkstemp('.stdout')
     stderr, stderrFilename = tempfile.mkstemp('.stderr')
     try:
-        p = popenCLIExecutable(command, stdout = stdout, stderr = stderr)
+        p = popenCLIExecutable(command, stdout = stdout, stderr = stderr, **kwargs)
         ec = p.wait()
         with file(stderrFilename) as f:
             for line in f:
@@ -136,11 +143,11 @@ class CLIModule(list):
 
     __slots__ = ('path', ) + tuple(map(_tagToIdentifier, REQUIRED_ELEMENTS + OPTIONAL_ELEMENTS))
 
-    def __init__(self, path):
+    def __init__(self, path, env = None):
         self.path = path
 
         if isCLIExecutable(path):
-            elementTree = getXMLDescription(path)
+            elementTree = getXMLDescription(path, env = env)
         else:
             with file(path) as f:
                 elementTree = ET.parse(f)
