@@ -23,10 +23,13 @@ def isCLIExecutable(filePath):
         return not '.' in os.path.basename(filePath)
 
 def listCLIExecutables(baseDir):
-    return [path for path in glob.glob(os.path.join(baseDir, '*'))
+    return [path for path in glob.glob(os.path.join(os.path.normpath(baseDir), '*'))
             if isCLIExecutable(path)]
 
-re_slicerSubPath = re.compile('/lib/Slicer-[0-9.]*/cli-modules/.*')
+re_slicerSubPath = '/lib/Slicer-[0-9.]*/cli-modules/.*'
+if sys.platform.startswith('win'):
+    re_slicerSubPath = re_slicerSubPath.replace('/', r'[/\\]')
+re_slicerSubPath = re.compile(re_slicerSubPath)
 
 def popenCLIExecutable(command, **kwargs):
     """Wrapper around subprocess.Popen constructor that tries to
@@ -295,7 +298,7 @@ class CLIParameter(object):
         return (self.typ.endswith('-vector') and self.typ != 'string-vector') or self.typ in ('point', 'region')
 
     def isExternalType(self):
-        """Return True iff parameter values of this type are transferred via temporary files"""
+        """Return True iff parameter values of this type are transferred via (temporary) files"""
         return self.typ in self.EXTERNAL_TYPES
 
     def defaultExtension(self):
