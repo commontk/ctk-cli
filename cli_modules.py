@@ -184,7 +184,8 @@ class CLIModule(list):
         options = []
         outputs = []
         for parameter in self.parameters():
-            if parameter.channel == 'output' and not parameter.isExternalType():
+            if parameter.channel == 'output' and not (
+                    parameter.isExternalType() or parameter.typ == 'file'):
                 outputs.append(parameter)
             elif parameter.index is not None:
                 arguments.append(parameter)
