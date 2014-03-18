@@ -159,7 +159,10 @@ class CLIModule(list):
 
     @property
     def name(self):
-        return os.path.basename(self.path)
+        result = os.path.basename(self.path)
+        if result.endswith('.exe'):
+            result = result[:-4]
+        return result
 
     def parameters(self):
         """Generator that recursively enumerates all parameters from
