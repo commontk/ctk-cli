@@ -5,6 +5,11 @@ logger = logging.getLogger(__name__)
 
 
 def isCLIExecutable(filePath):
+    """Test whether given `filePath` is an executable.  Does not really
+    check whether the executable is a CLI (e.g. whether it supports
+    --xml), but can be used to filter out non-executables within a
+    directory with CLI modules.
+    """
     # see qSlicerUtils::isCLIExecutable
     # e.g. https://github.com/Slicer/Slicer/blob/master/Base/QTCore/qSlicerUtils.cxx
     if not os.path.isfile(filePath):
@@ -21,6 +26,8 @@ def isCLIExecutable(filePath):
         return not '.' in os.path.basename(filePath)
 
 def listCLIExecutables(baseDir):
+    """Return list of paths to valid CLI executables within baseDir (non-recursively).
+    This calls `isCLIExecutable()` on all files within `baseDir`."""
     return [path for path in glob.glob(os.path.join(os.path.normpath(baseDir), '*'))
             if isCLIExecutable(path)]
 
