@@ -1,4 +1,10 @@
 *~
 *.py[oc]
+
 .DS_Store
-Modules/Macros/CTK_CLI/generated
+
+dist/
+sdist/
+*.egg-info/
+.installed.cfg
+*.egg
