@@ -1,1 +1,2 @@
-from module import CLIModule, getXMLDescription, isCLIExecutable, listCLIExecutables, popenCLIExecutable
+from module import CLIModule
+from execution import getXMLDescription, isCLIExecutable, listCLIExecutables, popenCLIExecutable
