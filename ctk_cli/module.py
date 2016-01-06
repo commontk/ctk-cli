@@ -210,6 +210,7 @@ class CLIParameter(object):
                  "elements", # enumerationType
                  "coordinateSystem", # pointType
                  "fileExtensions", # fileType
+                 "reference", # imageType
                  "subtype", # 'type' of imageType / geometryType
         )
 
@@ -284,6 +285,7 @@ class CLIParameter(object):
         self.elements = None
         self.coordinateSystem = None
         self.fileExtensions = None
+        self.reference = None
         self.subtype = None
 
         for key, value in elementTree.items():
@@ -295,6 +297,8 @@ class CLIParameter(object):
                 self.coordinateSystem = value
             elif key == 'fileExtensions':
                 self.fileExtensions = [ext.strip() for ext in value.split(",")]
+            elif key == 'reference' and self.typ == 'image':
+                self.reference = value
             elif key == 'type':
                 self.subtype = value
             elif key != 'hidden':
