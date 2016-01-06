@@ -25,11 +25,13 @@ def isCLIExecutable(filePath):
             return False
         return not '.' in os.path.basename(filePath)
 
+
 def listCLIExecutables(baseDir):
     """Return list of paths to valid CLI executables within baseDir (non-recursively).
     This calls `isCLIExecutable()` on all files within `baseDir`."""
     return [path for path in glob.glob(os.path.join(os.path.normpath(baseDir), '*'))
             if isCLIExecutable(path)]
+
 
 re_slicerSubPath = '/lib/Slicer-[0-9.]*/cli-modules/.*'
 if sys.platform.startswith('win'):
@@ -57,6 +59,7 @@ def popenCLIExecutable(command, **kwargs):
             command = [wrapper, '--launcher-no-splash', '--launch'] + command
 
     return subprocess.Popen(command, **kwargs)
+
 
 def getXMLDescription(cliExecutable, **kwargs):
     """Call given cliExecutable with --xml and return xml ElementTree
