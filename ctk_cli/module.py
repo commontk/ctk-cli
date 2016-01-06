@@ -309,6 +309,10 @@ class CLIParameter(object):
             else:
                 logger.warning("Element %r within %r not parsed" % (_tag(n), _tag(elementTree)))
 
+        if not self.flag and not self.longflag and self.index is None:
+            logger.warning("Parameter %s cannot be passed (missing one of flag, longflag, or index)!" % (
+                self.identifier(), ))
+
         if self.flag and not self.flag.startswith('-'):
             self.flag = '-' + self.flag
         if self.longflag and not self.longflag.startswith('-'):
