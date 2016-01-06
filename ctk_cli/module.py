@@ -263,7 +263,7 @@ class CLIParameter(object):
 
     @classmethod
     def parse(cls, elementTree):
-        assert _tag(elementTree) in cls.TYPES, _tag(elementTree)
+        assert _tag(elementTree) in cls.TYPES, "%s not in CLIParameter.TYPES" % _tag(elementTree)
 
         self = cls()
         self.typ = _tag(elementTree)
