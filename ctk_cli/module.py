@@ -122,10 +122,12 @@ class CLIModule(list):
             elif parameter.index is not None:
                 arguments.append(parameter)
                 if parameter.flag is not None or parameter.longflag is not None:
-                    logger.warning("Parameter %s has both index=%d and flag set." % (
+                    logger.warning("Parameter '%s' has both index=%d and flag set." % (
                         parameter.identifier(), parameter.index))
-            else:
+            elif parameter.flag or parameter.longflag:
                 options.append(parameter)
+            else:
+                logger.warning("Parameter '%s' cannot be passed (missing flag, longflag, or index)!\n" % p.name)
         arguments.sort(key = lambda parameter: parameter.index)
         return (arguments, options, outputs)
 
