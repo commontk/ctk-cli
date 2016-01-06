@@ -86,6 +86,9 @@ class CLIModule(list):
 
         self._parse(elementTree.getroot())
 
+    def __repr__(self):
+        return '<CLIModule %r>' % (self.name, )
+        
     @property
     def name(self):
         result = os.path.basename(self.path)
@@ -159,6 +162,9 @@ class CLIParameters(list):
 
         return self
 
+    def __repr__(self):
+        return '<CLIParameters %r%s>' % (self.label, ' (advanced)' if self.advanced else '')
+
 
 class CLIParameter(object):
     VALUE_TYPES = (
@@ -205,6 +211,9 @@ class CLIParameter(object):
                  "subtype", # 'type' of imageType / geometryType
         )
 
+    def __repr__(self):
+        return '<CLIParameter %r of type %s>' % (self.identifier(), self.typ)
+        
     def identifier(self):
         result = self.name if self.name else self.longflag.lstrip('-')
         if not result:
