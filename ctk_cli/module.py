@@ -211,6 +211,9 @@ class CLIParameter(object):
                  "subtype", # 'type' of imageType / geometryType
         )
 
+    def __str__(self):
+        return "%s parameter '%s'" % (self.typ, self.identifier())
+        
     def __repr__(self):
         return '<CLIParameter %r of type %s>' % (self.identifier(), self.typ)
         
