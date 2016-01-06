@@ -43,7 +43,15 @@ def popenCLIExecutable(command, **kwargs):
     detect Slicer CLI modules and launches them through the Slicer
     launcher in order to prevent potential DLL dependency issues.
 
-    Any kwargs are passed on to subprocess.Popen()."""
+    Any kwargs are passed on to subprocess.Popen().
+
+    If you ever try to use this function to run a CLI, you might want to
+    take a look at
+    https://github.com/hmeine/MeVisLab-CLI/blob/master/Modules/Macros/CTK_CLI/CLIModuleBackend.py
+    (in particular, the CLIExecution class.)
+    Ideally, more of that code would be extracted and moved here, but
+    I have not gotten around to doing that yet.
+    """
 
     cliExecutable = command[0]
 
