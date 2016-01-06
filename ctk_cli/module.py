@@ -184,6 +184,7 @@ class CLIParameter(object):
     EXTERNAL_TYPES = {
         'image'       : '.nrrd',
         'geometry'    : '.vtp',
+        'pointfile'   : '.fcsv',
         'transform'   : '.mrml',
         'table'       : '.ctbl', # (CSV format)
         'measurement' : '.csv',
@@ -208,7 +209,7 @@ class CLIParameter(object):
                  "constraints", # scalarVectorType, scalarType
                  "multiple", # multipleType
                  "elements", # enumerationType
-                 "coordinateSystem", # pointType
+                 "coordinateSystem", # pointType, pointFileType
                  "fileExtensions", # fileType
                  "reference", # imageType
                  "subtype", # 'type' of imageType / geometryType
@@ -291,9 +292,7 @@ class CLIParameter(object):
         for key, value in elementTree.items():
             if key == 'multiple':
                 self.multiple = _parseBool(value)
-            elif key == 'coordinateSystem':
-                self.coordinateSystem = value
-            elif key == 'coordinateSystem':
+            elif key == 'coordinateSystem' and self.typ in ('point', 'pointfile'):
                 self.coordinateSystem = value
             elif key == 'fileExtensions':
                 self.fileExtensions = [ext.strip() for ext in value.split(",")]
