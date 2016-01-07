@@ -92,8 +92,9 @@ class CLIModule(list):
     @property
     def name(self):
         result = os.path.basename(self.path)
-        if result.endswith('.exe'):
-            result = result[:-4]
+        base, ext = os.path.splitext(result)
+        if ext in ('.exe', '.xml', '.py'):
+            result = base
         return result
 
     def parameters(self):
