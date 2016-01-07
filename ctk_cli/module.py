@@ -127,7 +127,7 @@ class CLIModule(list):
             elif parameter.flag or parameter.longflag:
                 options.append(parameter)
             else:
-                logger.warning("Parameter '%s' cannot be passed (missing flag, longflag, or index)!\n" % p.name)
+                logger.warning("Parameter '%s' cannot be passed (missing flag, longflag, or index)!" % parameter.name)
         arguments.sort(key = lambda parameter: parameter.index)
         return (arguments, options, outputs)
 
