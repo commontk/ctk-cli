@@ -330,10 +330,18 @@ class CLIParameter(object):
             self.index = int(self.index)
 
         if self.default:
-            self.default = self.parseValue(self.default)
+            try:
+                self.default = self.parseValue(self.default)
+            except ValueError, e:
+                logger.warning('Could not parse default value of <%s> (%s): %s' % (
+                    _tag(elementTree), self.name, e))
 
         if self.typ.endswith('-enumeration'):
-            self.elements = map(self.parseValue, elements)
+            try:
+                self.elements = map(self.parseValue, elements)
+            except ValueError, e:
+                logger.warning('Problem parsing enumeration element values of <%s> (%s): %s' % (
+                    _tag(elementTree), self.name, e))
             if not elements:
                 logger.warning("No <element>s found within <%s>" % (_tag(elementTree), ))
         else:
