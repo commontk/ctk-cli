@@ -299,6 +299,7 @@ class CLIParameter(object):
                 self.fileExtensions = [ext.strip() for ext in value.split(",")]
             elif key == 'reference' and self.typ in ('image', 'transform', 'geometry', 'table'):
                 self.reference = value
+                logger.warning("'reference' attribute of %r is not part of the spec yet (CTK issue #623)" % (_tag(elementTree), ))
             elif key == 'type':
                 self.subtype = value
             elif key != 'hidden':
