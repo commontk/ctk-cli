@@ -212,7 +212,7 @@ class CLIParameter(object):
                  "elements", # enumerationType
                  "coordinateSystem", # pointType, pointFileType
                  "fileExtensions", # fileType
-                 "reference", # imageType
+                 "reference", # imageType, transformType, geometryType, tableType
                  "subtype", # 'type' of imageType / geometryType
         )
 
@@ -297,7 +297,7 @@ class CLIParameter(object):
                 self.coordinateSystem = value
             elif key == 'fileExtensions':
                 self.fileExtensions = [ext.strip() for ext in value.split(",")]
-            elif key == 'reference' and self.typ == 'image':
+            elif key == 'reference' and self.typ in ('image', 'transform', 'geometry', 'table'):
                 self.reference = value
             elif key == 'type':
                 self.subtype = value
