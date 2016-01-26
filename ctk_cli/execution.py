@@ -33,7 +33,7 @@ def listCLIExecutables(baseDir):
             if isCLIExecutable(path)]
 
 
-re_slicerSubPath = '/lib/Slicer-[0-9.]*/cli-modules/.*'
+re_slicerSubPath = '(/Extensions-[0-9]*/.*)?/lib/Slicer-[0-9.]*/cli-modules/.*'
 if sys.platform.startswith('win'):
     re_slicerSubPath = re_slicerSubPath.replace('/', r'[/\\]')
 re_slicerSubPath = re.compile(re_slicerSubPath)
