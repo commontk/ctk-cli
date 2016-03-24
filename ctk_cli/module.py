@@ -242,6 +242,11 @@ class CLIParameter(object):
         return self.index is None
 
     def isVector(self):
+        """Return whether this is a vector-like type with multiple
+        elements of a numeric or string type.  This includes the
+        xxx-vector types as well as point (fixed 3D) and region (fixed
+        6D).  For these, the value will be a sequence of the
+        corresponding python type."""
         return self.isNumericVector() or self.typ == 'string-vector'
 
     def isNumericVector(self):
