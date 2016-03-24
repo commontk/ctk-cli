@@ -176,7 +176,8 @@ class CLIParameter(object):
         'string', 'directory',
         'integer-vector', 'float-vector', 'double-vector',
         'string-vector',
-        'integer-enumeration', 'float-enumeration', 'double-enumeration', 'string-enumeration',
+        'integer-enumeration', 'float-enumeration', 'double-enumeration',
+        'string-enumeration',
         'point', 'region',
         'file',
     )
@@ -198,11 +199,12 @@ class CLIParameter(object):
         'integer' : int,
         'float' : float,
         'double' : float,
+        'string' : str
     }
 
     REQUIRED_ELEMENTS = ('name', 'description', 'label')
 
-    OPTIONAL_ELEMENTS = (# either 'flag' or 'longflag' (or both) or 'index' are required
+    OPTIONAL_ELEMENTS = (# either 'index' or atleast one of 'flag' or 'longflag' is required
                          'flag', 'longflag', 'index',
                          'default', 'channel')
     
@@ -230,7 +232,7 @@ class CLIParameter(object):
 
     def parseValue(self, value):
         """Parse the given value and return result."""
-        if self.isNumericVector():
+        if self.isNumericVector() or self.typ == 'string-vector':
             return map(self._pythonType, value.split(','))
         if self.typ == 'boolean':
             return _parseBool(value)
