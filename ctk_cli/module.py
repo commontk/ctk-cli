@@ -204,7 +204,7 @@ class CLIParameter(object):
 
     REQUIRED_ELEMENTS = ('name', 'description', 'label')
 
-    OPTIONAL_ELEMENTS = (# either 'index' or atleast one of 'flag' or 'longflag' is required
+    OPTIONAL_ELEMENTS = (# either 'index' or at least one of 'flag' or 'longflag' is required
                          'flag', 'longflag', 'index',
                          'default', 'channel')
     
