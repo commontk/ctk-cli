@@ -232,7 +232,7 @@ class CLIParameter(object):
 
     def parseValue(self, value):
         """Parse the given value and return result."""
-        if self.isNumericVector() or self.typ == 'string-vector':
+        if self.isVector():
             return map(self._pythonType, value.split(','))
         if self.typ == 'boolean':
             return _parseBool(value)
