@@ -241,6 +241,9 @@ class CLIParameter(object):
     def isOptional(self):
         return self.index is None
 
+    def isVector(self):
+        return self.isNumericVector() or self.typ == 'string-vector'
+
     def isNumericVector(self):
         """Return whether this is a vector-like type with multiple
         elements of a numeric type.  This includes the numeric
