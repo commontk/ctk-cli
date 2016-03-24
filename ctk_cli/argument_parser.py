@@ -102,6 +102,19 @@ class CLIArgumentParser(argparse.ArgumentParser):
                 opt_params.append(p)
         index_params.sort(key=lambda p: p.index)
 
+        # if xml spec has simple output parameters add returnparameterfile
+        if len(simple_out_params) > 0:
+            self.add_argument(
+                '--returnparameterfile',
+                dest='returnParameterFile',
+                metavar='<file>',
+                type=str,
+                help=' Filename in which to write simple return parameters '
+                '(integer, float, integer-vector, etc.) as opposed to bulk '
+                'return parameters (image, file, directory, geometry, '
+                'transform, measurement, table).'
+            )
+
         # add index parameters as positional arguments
         for param in index_params:
 
@@ -159,14 +172,3 @@ class CLIArgumentParser(argparse.ArgumentParser):
 
             self.add_argument(*cur_args, **cur_kwargs)
 
-        # if xml spec has simple output parameters add returnparameterfile
-        if len(simple_out_params) > 0:
-            self.add_argument(
-                '--returnparameterfile',
-                dest='returnParameterFile',
-                type=str,
-                help=' Filename in which to write simple return parameters '
-                '(integer, float, integer-vector, etc.) as opposed to bulk '
-                'return parameters (image, file, directory, geometry, '
-                'transform, measurement, table).'
-            )
