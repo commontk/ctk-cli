@@ -120,7 +120,7 @@ class CLIArgumentParser(argparse.ArgumentParser):
 
             cur_kwargs = {
                 'type': param.parseValue,
-                'help': param.description,
+                'help': param.description + ' (type: %s)' % param.typ,
             }
 
             if param.elements is not None:
