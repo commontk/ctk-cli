@@ -257,7 +257,7 @@ class CLIParameter(object):
         return (self.typ.endswith('-vector') and self.typ != 'string-vector') or self.typ in ('point', 'region')
 
     def isExternalType(self):
-        """Return True iff parameter values of this type are transferred via (temporary) files"""
+        """Return True iff values of this type are file paths"""
         return (self.typ in self.EXTERNAL_TYPES or
                 self.typ in ['file', 'directory'])
 
