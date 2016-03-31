@@ -98,16 +98,42 @@ class CLIArgumentParser(argparse.ArgumentParser):
         for p in simple_out_params:
             if p.index is not None:
                 index_params.append(p)
-            else:
+            elif p.flag or p.longflag:
                 opt_params.append(p)
+
+        # sort indexed parameters in increasing order of index
         index_params.sort(key=lambda p: p.index)
+
+        # sort opt parameters in increasing order of name for easy lookup
+        def get_flag(p):
+            if p.flag is not None:
+                return p.flag.strip('-')
+            elif p.longflag is not None:
+                return p.longflag.strip('-')
+            else:
+                return None
+
+        opt_params.sort(key=lambda p: get_flag(p))
+
+        # if xml spec has simple output parameters add returnparameterfile
+        if len(simple_out_params) > 0:
+            self.add_argument(
+                '--returnparameterfile',
+                dest='returnParameterFile',
+                metavar='<file>',
+                type=str,
+                help=' Filename in which to write simple return parameters '
+                '(integer, float, integer-vector, etc.) as opposed to bulk '
+                'return parameters (image, file, directory, geometry, '
+                'transform, measurement, table).'
+            )
 
         # add index parameters as positional arguments
         for param in index_params:
 
             cur_kwargs = {
                 'type': param.parseValue,
-                'help': param.description,
+                'help': param.description + ' (type: %s)' % param.typ,
             }
 
             if param.elements is not None:
@@ -159,14 +185,3 @@ class CLIArgumentParser(argparse.ArgumentParser):
 
             self.add_argument(*cur_args, **cur_kwargs)
 
-        # if xml spec has simple output parameters add returnparameterfile
-        if len(simple_out_params) > 0:
-            self.add_argument(
-                '--returnparameterfile',
-                dest='returnParameterFile',
-                type=str,
-                help=' Filename in which to write simple return parameters '
-                '(integer, float, integer-vector, etc.) as opposed to bulk '
-                'return parameters (image, file, directory, geometry, '
-                'transform, measurement, table).'
-            )
