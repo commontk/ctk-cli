@@ -117,8 +117,7 @@ class CLIModule(list):
         options = []
         outputs = []
         for parameter in self.parameters():
-            if parameter.channel == 'output' and not (
-                    parameter.isExternalType() or parameter.typ == 'file'):
+            if parameter.channel == 'output' and not parameter.isExternalType():
                 outputs.append(parameter)
             elif parameter.index is not None:
                 arguments.append(parameter)
@@ -259,7 +258,8 @@ class CLIParameter(object):
 
     def isExternalType(self):
         """Return True iff parameter values of this type are transferred via (temporary) files"""
-        return self.typ in self.EXTERNAL_TYPES
+        return (self.typ in self.EXTERNAL_TYPES or
+                self.typ in ['file', 'directory'])
 
     def defaultExtension(self):
         """Return default extension for this parameter type, checked
