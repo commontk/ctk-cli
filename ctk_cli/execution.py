@@ -86,7 +86,7 @@ def getXMLDescription(cliExecutable, **kwargs):
             for line in f:
                 logger.warning('%s: %s' % (os.path.basename(cliExecutable), line[:-1]))
         if ec:
-            raise RuntimeError, "Calling %s failed (exit code %d)" % (cliExecutable, ec)
+            raise RuntimeError("Calling %s failed (exit code %d)" % (cliExecutable, ec))
         with file(stdoutFilename) as f:
             return ET.parse(f)
     finally:

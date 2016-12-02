@@ -1,4 +1,4 @@
-from module import CLIModule
-from execution import (getXMLDescription, isCLIExecutable,
+from .module import CLIModule
+from .execution import (getXMLDescription, isCLIExecutable,
                        listCLIExecutables, popenCLIExecutable)
-from argument_parser import CLIArgumentParser
+from .argument_parser import CLIArgumentParser
