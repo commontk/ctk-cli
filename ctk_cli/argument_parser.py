@@ -40,7 +40,7 @@ def _make_print_xml_action(xml_spec_file):
                 help=help)
 
         def __call__(self, parser, namespace, values, option_string=None):
-            print str_xml
+            print(str_xml)
             parser.exit()
 
     return _PrintXMLAction

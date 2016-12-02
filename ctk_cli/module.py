@@ -3,7 +3,7 @@
 
 import os, logging
 import xml.etree.ElementTree as ET
-from execution import isCLIExecutable, getXMLDescription
+from .execution import isCLIExecutable, getXMLDescription
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ def _parseBool(x):
         return True
     if x in ('false', 'False', '0'):
         return False
-    raise ValueError, "cannot convert %r to boolean" % (x, )
+    raise ValueError("cannot convert %r to boolean" % (x, ))
 
 def _tag(element):
     """Return element.tag with xmlns stripped away."""
@@ -226,7 +226,7 @@ class CLIParameter(object):
     def identifier(self):
         result = self.name if self.name else self.longflag.lstrip('-')
         if not result:
-            raise RuntimeError, "Cannot identify parameter either by name or by longflag (both missing)"
+            raise RuntimeError("Cannot identify parameter either by name or by longflag (both missing)")
         return result
 
     def parseValue(self, value):
@@ -344,14 +344,14 @@ class CLIParameter(object):
         if self.default:
             try:
                 self.default = self.parseValue(self.default)
-            except ValueError, e:
+            except ValueError as e:
                 logger.warning('Could not parse default value of <%s> (%s): %s' % (
                     _tag(elementTree), self.name, e))
 
         if self.typ.endswith('-enumeration'):
             try:
                 self.elements = map(self.parseValue, elements)
-            except ValueError, e:
+            except ValueError as e:
                 logger.warning('Problem parsing enumeration element values of <%s> (%s): %s' % (
                     _tag(elementTree), self.name, e))
             if not elements:
