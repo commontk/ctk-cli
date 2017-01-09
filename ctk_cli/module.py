@@ -75,22 +75,49 @@ class CLIModule(list):
 
     __slots__ = ('path', ) + tuple(map(_tagToIdentifier, REQUIRED_ELEMENTS + OPTIONAL_ELEMENTS))
 
-    def __init__(self, path, env = None):
+    def __init__(self, path = None, env = None, stream = None):
+        """
+        Parse a CLI specification from an XML document. This class can be
+        instantiated in three different modes:
+
+        1. Pass the ``path`` parameter that points to a CLI executable. This
+           mode will run the executable in a subprocess, passing "--xml"
+           and parsing the output.
+        2. Pass the ``path`` parameter representing the path to an XML
+           file on disk that contains the CLI description.
+        3. Pass a file-like object in the ``stream`` kwarg that contains
+           the XML document to be parsed.
+
+        :param path: The path on the filesystem of either the CLI to
+            be interrogated, or a CLI XML description document.
+        :param env: If using mode 1 described above, setting this parameter
+            causes "env=<value>" to be passed as an additional command line argument
+            when invoking the subprocess to describe the CLI.
+        :param stream: An open file-like object that will stream the CLI
+            XML description document.
+        """
         self.path = path
 
-        if isCLIExecutable(path):
+        if path and isCLIExecutable(path):
             elementTree = getXMLDescription(path, env = env)
-        else:
+        elif path:
             with file(path) as f:
                 elementTree = ET.parse(f)
+        elif stream is not None:
+            elementTree = ET.parse(stream)
+        else:
+            raise RuntimeError('You must pass either a path or stream when instantiating CLIModule.')
 
         self._parse(elementTree.getroot())
 
     def __repr__(self):
         return '<CLIModule %r>' % (self.name, )
-        
+
     @property
     def name(self):
+        if self.path is None:
+            return None
+
         result = os.path.basename(self.path)
         base, ext = os.path.splitext(result)
         if ext in ('.exe', '.xml', '.py'):
@@ -154,9 +181,9 @@ class CLIParameters(list):
     @classmethod
     def parse(cls, elementTree):
         self = cls()
-        
+
         childNodes = _parseElements(self, elementTree, 'parameters')
-        
+
         self.advanced = _parseBool(elementTree.get('advanced', 'false'))
 
         for pnode in childNodes:
@@ -206,7 +233,7 @@ class CLIParameter(object):
     OPTIONAL_ELEMENTS = (# either 'index' or at least one of 'flag' or 'longflag' is required
                          'flag', 'longflag', 'index',
                          'default', 'channel')
-    
+
     __slots__ = ("typ", "hidden", "_pythonType") + REQUIRED_ELEMENTS + OPTIONAL_ELEMENTS + (
                  "constraints", # scalarVectorType, scalarType
                  "multiple", # multipleType
@@ -219,10 +246,10 @@ class CLIParameter(object):
 
     def __str__(self):
         return "%s parameter '%s'" % (self.typ, self.identifier())
-        
+
     def __repr__(self):
         return '<CLIParameter %r of type %s>' % (self.identifier(), self.typ)
-        
+
     def identifier(self):
         result = self.name if self.name else self.longflag.lstrip('-')
         if not result:
@@ -368,7 +395,7 @@ class CLIConstraints(object):
     REQUIRED_ELEMENTS = ('step', )
 
     OPTIONAL_ELEMENTS = ('minimum', 'maximum')
-    
+
     __slots__ = REQUIRED_ELEMENTS + OPTIONAL_ELEMENTS
 
     @classmethod
