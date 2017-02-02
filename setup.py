@@ -12,7 +12,8 @@ setup(
         'Environment :: Web Environment',
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2'
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
     ],
     author='Hans Meine',
     author_email='hans_meine@gmx.net',
