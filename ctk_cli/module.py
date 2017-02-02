@@ -101,7 +101,7 @@ class CLIModule(list):
         if path and isCLIExecutable(path):
             elementTree = getXMLDescription(path, env = env)
         elif path:
-            with file(path) as f:
+            with open(path) as f:
                 elementTree = ET.parse(f)
         elif stream is not None:
             elementTree = ET.parse(stream)

@@ -82,12 +82,12 @@ def getXMLDescription(cliExecutable, **kwargs):
     try:
         p = popenCLIExecutable(command, stdout = stdout, stderr = stderr, **kwargs)
         ec = p.wait()
-        with file(stderrFilename) as f:
+        with open(stderrFilename) as f:
             for line in f:
                 logger.warning('%s: %s' % (os.path.basename(cliExecutable), line[:-1]))
         if ec:
             raise RuntimeError("Calling %s failed (exit code %d)" % (cliExecutable, ec))
-        with file(stdoutFilename) as f:
+        with open(stdoutFilename) as f:
             return ET.parse(f)
     finally:
         os.close(stdout)
