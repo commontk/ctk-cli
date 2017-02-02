@@ -259,7 +259,7 @@ class CLIParameter(object):
     def parseValue(self, value):
         """Parse the given value and return result."""
         if self.isVector():
-            return map(self._pythonType, value.split(','))
+            return list(map(self._pythonType, value.split(',')))
         if self.typ == 'boolean':
             return _parseBool(value)
         return self._pythonType(value)
@@ -377,7 +377,7 @@ class CLIParameter(object):
 
         if self.typ.endswith('-enumeration'):
             try:
-                self.elements = map(self.parseValue, elements)
+                self.elements = list(map(self.parseValue, elements))
             except ValueError as e:
                 logger.warning('Problem parsing enumeration element values of <%s> (%s): %s' % (
                     _tag(elementTree), self.name, e))
