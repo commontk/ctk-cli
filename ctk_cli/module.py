@@ -75,10 +75,10 @@ class CLIModule(list):
 
     __slots__ = ('path', ) + tuple(map(_tagToIdentifier, REQUIRED_ELEMENTS + OPTIONAL_ELEMENTS))
 
-    def __init__(self, path = None, env = None, stream = None):
+    def __init__(self, path = None, env = None, stream = None, root = None):
         """
         Parse a CLI specification from an XML document. This class can be
-        instantiated in three different modes:
+        instantiated in several different modes:
 
         1. Pass the ``path`` parameter that points to a CLI executable. This
            mode will run the executable in a subprocess, passing "--xml"
@@ -87,6 +87,7 @@ class CLIModule(list):
            file on disk that contains the CLI description.
         3. Pass a file-like object in the ``stream`` kwarg that contains
            the XML document to be parsed.
+        4. Pass the root of an existing elementTree object.
 
         :param path: The path on the filesystem of either the CLI to
             be interrogated, or a CLI XML description document.
@@ -95,6 +96,7 @@ class CLIModule(list):
             when invoking the subprocess to describe the CLI.
         :param stream: An open file-like object that will stream the CLI
             XML description document.
+        :param root: The root of an existing ElementTree representing a CLIModule.
         """
         self.path = path
 
@@ -105,10 +107,10 @@ class CLIModule(list):
                 elementTree = ET.parse(f)
         elif stream is not None:
             elementTree = ET.parse(stream)
-        else:
-            raise RuntimeError('You must pass either a path or stream when instantiating CLIModule.')
+        elif root is None:
+            raise RuntimeError('You must pass a path, stream, or root when instantiating CLIModule.')
 
-        self._parse(elementTree.getroot())
+        self._parse(root or elementTree.getroot())
 
     def __repr__(self):
         return '<CLIModule %r>' % (self.name, )
@@ -170,6 +172,49 @@ class CLIModule(list):
                 self.append(CLIParameters.parse(pnode))
             else:
                 logger.warning("Element %r within %r not parsed" % (_tag(pnode), _tag(elementTree)))
+
+
+class CLIModuleList(object):
+    def __init__(self, path=None, env=None, stream=None, root=None):
+        """
+        Parse a list of CLI specifications from an XML document. This class can be
+        instantiated in several different modes:
+
+        1. Pass the ``path`` parameter that points to a CLI executable. This
+           mode will run the executable in a subprocess, passing "--xml"
+           and parsing the output.
+        2. Pass the ``path`` parameter representing the path to an XML
+           file on disk that contains the CLI description.
+        3. Pass a file-like object in the ``stream`` kwarg that contains
+           the XML document to be parsed.
+
+        :param path: The path on the filesystem of either the CLI to
+            be interrogated, or a CLI XML description document.
+        :param env: If using mode 1 described above, setting this parameter
+            causes "env=<value>" to be passed as an additional command line argument
+            when invoking the subprocess to describe the CLI.
+        :param stream: An open file-like object that will stream the CLI
+            XML description document.
+        :param root: The root of an existing ElementTree representing a CLIModuleList.
+        """
+        self.path = path
+
+        if path and isCLIExecutable(path):
+            elementTree = getXMLDescription(path, env=env)
+        elif path:
+            with open(path) as f:
+                elementTree = ET.parse(f)
+        elif stream is not None:
+            elementTree = ET.parse(stream)
+        elif root is None:
+            raise RuntimeError(
+                'You must pass a path, stream, or root when instantiating CLIModuleList.')
+
+        root = root or elementTree.getroot()
+        if root.tag == 'executables':
+            self.modules = [CLIModule(root=module) for module in elementTree.findall('executable')]
+        else:
+            self.modules = [CLIModule(root=root)]
 
 
 class CLIParameters(list):
