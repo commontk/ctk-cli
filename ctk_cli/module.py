@@ -165,6 +165,9 @@ class CLIModule(list):
     # factory method from the outside, even if the signature and
     # content is really similar:
     def _parse(self, elementTree):
+        if 'path' in elementTree.attrib:
+            self.path = elementTree.attrib['path']
+
         childNodes = _parseElements(self, elementTree, 'executable')
 
         for pnode in childNodes:
