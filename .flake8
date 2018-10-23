@@ -1,5 +1,5 @@
 [flake8]
-max-line-length: 80
+max-line-length: 140
 # Whether to display the pep8 instructions on failure (can be quite verbose)
 show-pep8: False
 # Whether to show source code for each failure
@@ -8,3 +8,28 @@ show-source: True
 max-complexity: 14
 format: pylint
 exclude: .git,.idea,.eggs,__pycache__,.tox,docs/conf.py
+ignore:
+    # function is too complex
+    C901,
+    # continuation line under-indented for hanging indent
+    E121,
+    # continuation line over-indented for hanging indent
+    E126,
+    # whitespace before
+    E203,
+    # missing whitespace around arithmetic operator
+    E226,
+    # unexpected spaces around keyword / parameter equals
+    E251,
+    # at least two spaces before inline comment
+    E261,
+    # expected 2 blank lines, found 1
+    E302,
+    # multiple imports on one line
+    E401,
+    # test for membership should be 'not in'
+    E713,
+    # blank line contains whitespace
+    W293,
+    # blank line at end of file
+    W391,
